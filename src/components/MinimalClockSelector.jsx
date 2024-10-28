@@ -17,6 +17,7 @@ const DualSelectionClock = ({ onChange }) => {
   const longPressThreshold = 300;
   const moveThreshold = 10;
 
+
   const styles = {
     transition: 'fill 0.2s ease, stroke 0.2s ease',
     tear: {
@@ -249,15 +250,14 @@ const DualSelectionClock = ({ onChange }) => {
       window.removeEventListener('touchend', cleanUp);
     };
   }, []);  
-  const clockSize = isTouchDevice ? 288 : 192; // 288px = w-72, 192px = w-48
+
 
   return (
-    <div className="p-2 md:p-4 w-full">
-      {/* Instructions and controls container */}
+    <div className="w-full p-4">
+      {/* Instructions and controls container with max width */}
       <div className="max-w-sm mx-auto mb-4">
-                {/* Instructions dropdown for mobile */}
-                {isTouchDevice && (
-          <div className="mb-2 md:mb-4">
+        {isTouchDevice ? (
+          <div className="mb-4">
             <button
               onClick={() => setShowInstructions(!showInstructions)}
               className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded"
@@ -275,13 +275,23 @@ const DualSelectionClock = ({ onChange }) => {
                 </ul>
               </div>
             )}
-          </div>
-        )}
 
-        {/* Desktop instructions */}
-        {!isTouchDevice && (
-          <div className="mb-2 md:mb-4 text-xs md:text-sm">
-            <p className="font-medium mb-1 md:mb-2">Instructions:</p>
+            <div className="mt-4">
+              <button
+                onClick={() => setIsAddMode(!isAddMode)}
+                className={`px-3 py-1.5 rounded text-xs md:text-sm font-medium transition-colors ${
+                  isAddMode 
+                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                }`}
+              >
+                Mode: {isAddMode ? 'Add' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 text-xs md:text-sm">
+            <p className="font-medium mb-2">Instructions:</p>
             <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
               <li>Click and drag to paint areas</li>
               <li>Right-click and drag to erase</li>
@@ -289,31 +299,17 @@ const DualSelectionClock = ({ onChange }) => {
             </ul>
           </div>
         )}
-
-        {/* Mode switch button for mobile */}
-        {isTouchDevice && (
-          <div className="mb-2 md:mb-4">
-            <button
-              onClick={() => setIsAddMode(!isAddMode)}
-              className={`px-3 py-1.5 rounded text-xs md:text-sm font-medium transition-colors ${
-                isAddMode 
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                  : 'bg-red-100 text-red-700 hover:bg-red-200'
-              }`}
-            >
-              Mode: {isAddMode ? 'Add' : 'Remove'}
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Clock container with inline sizing */}
-      <div className="flex justify-center items-center">
+      {/* Responsive clock container */}
+      <div className="flex justify-center">
         <div 
           className="relative touch-none select-none"
           style={{
-            width: `${clockSize}px`,
-            height: `${clockSize}px`
+            width: 'min(80vw, min(80vh, 500px))',
+            aspectRatio: '1',
+            minWidth: '200px',
+            maxWidth: '500px'
           }}
           onContextMenu={(e) => e.preventDefault()}
         >
@@ -324,7 +320,7 @@ const DualSelectionClock = ({ onChange }) => {
             onMouseLeave={handleEndDrawing}
             onTouchEnd={handleEndDrawing}
           >
-            {/* ... SVG content remains the same ... */}
+            {/* SVG content remains the same */}
             <circle cx="0" cy="0" r="100" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
             <circle cx="0" cy="0" r="85" fill="none" stroke="#e5e5e5" strokeWidth="0.5"/>
             <circle cx="0" cy="0" r="70" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
@@ -362,62 +358,59 @@ const DualSelectionClock = ({ onChange }) => {
             </g>
 
             <g>
-              {/* Hour markers and tears */}
-              <g>
-                {[...Array(12)].map((_, i) => {
-                  const hour = i + 1;
-                  const visualPos = getPosition(hour, 75);
-                  const interactionPos = isTouchDevice ? getPosition(hour, 100) : visualPos;
-                  const isSelected = selectedHours.includes(hour);
-                  
-                  return (
-                    <g 
-                      key={`tear-${hour}`}
-                      onClick={(e) => handleTearClick(hour, e)}
-                      onTouchStart={(e) => handleTearTouchStart(hour, e)}
-                      onTouchMove={handleTearTouchMove}
-                      onTouchEnd={handleTearTouchEnd}
-                      onMouseEnter={() => setHoveredHour(hour)}
-                      onMouseLeave={() => setHoveredHour(null)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {isTouchDevice && (
-                        <circle
-                          cx={interactionPos.x}
-                          cy={interactionPos.y}
-                          r="12"
-                          fill="transparent"
-                          className="touch-target"
-                        />
-                      )}
-                      
-                      {isSelected ? (
-                        <path
-                          {...createTearPath(visualPos.x, visualPos.y, visualPos.angle)}
-                          style={getStyles(hour, true)}
-                        />
-                      ) : (
-                        <circle
-                          cx={visualPos.x}
-                          cy={visualPos.y}
-                          r="12"
-                          style={getStyles(hour, false)}
-                        />
-                      )}
-                    </g>
-                  );
-                })}
-              </g>
+              {[...Array(12)].map((_, i) => {
+                const hour = i + 1;
+                const visualPos = getPosition(hour, 75);
+                const interactionPos = isTouchDevice ? getPosition(hour, 100) : visualPos;
+                const isSelected = selectedHours.includes(hour);
+                
+                return (
+                  <g 
+                    key={`tear-${hour}`}
+                    onClick={(e) => handleTearClick(hour, e)}
+                    onTouchStart={(e) => handleTearTouchStart(hour, e)}
+                    onTouchMove={handleTearTouchMove}
+                    onTouchEnd={handleTearTouchEnd}
+                    onMouseEnter={() => setHoveredHour(hour)}
+                    onMouseLeave={() => setHoveredHour(null)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {isTouchDevice && (
+                      <circle
+                        cx={interactionPos.x}
+                        cy={interactionPos.y}
+                        r="12"
+                        fill="transparent"
+                        className="touch-target"
+                      />
+                    )}
+                    
+                    {isSelected ? (
+                      <path
+                        {...createTearPath(visualPos.x, visualPos.y, visualPos.angle)}
+                        style={getStyles(hour, true)}
+                      />
+                    ) : (
+                      <circle
+                        cx={visualPos.x}
+                        cy={visualPos.y}
+                        r="12"
+                        style={getStyles(hour, false)}
+                      />
+                    )}
+                  </g>
+                );
+              })}
             </g>
 
-            {/* North marker */}
-            <line x1="0" y1="-100" x2="0" y2="-110" stroke="#666" strokeWidth="2"/>          </svg>            
+            <line x1="0" y1="-100" x2="0" y2="-110" stroke="#666" strokeWidth="2"/>
+          </svg>
         </div>
       </div>
 
       {/* Controls container */}
-      <div className="max-w-sm mx-auto">
-      <div className="mt-2 md:mt-4 flex justify-center">
+      <div className="max-w-sm mx-auto mt-4">
+        <div className="flex justify-center">
           <button 
             onClick={() => {
               setSelectedHours([]);
@@ -430,9 +423,9 @@ const DualSelectionClock = ({ onChange }) => {
           </button>
         </div>
 
-        <div className="mt-1 md:mt-2 text-xs md:text-sm text-center text-gray-500">
+        <div className="mt-2 text-xs md:text-sm text-center text-gray-500">
           {isDrawing && (isAddMode ? "Adding..." : "Removing...")}
-        </div>        
+        </div>
       </div>
     </div>
   );
