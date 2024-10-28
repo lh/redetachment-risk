@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const DualSelectionClock = ({ onChange }) => {
+  // ... [Previous state and refs remain unchanged]
   const [selectedHours, setSelectedHours] = useState([]);
   const [detachmentSegments, setDetachmentSegments] = useState([]);
   const [hoveredHour, setHoveredHour] = useState(null);
@@ -17,7 +18,7 @@ const DualSelectionClock = ({ onChange }) => {
   const longPressThreshold = 300;
   const moveThreshold = 10;
 
-
+  // ... [Previous helper functions and effects remain unchanged]
   const styles = {
     transition: 'fill 0.2s ease, stroke 0.2s ease',
     tear: {
@@ -46,6 +47,7 @@ const DualSelectionClock = ({ onChange }) => {
     }
   };
 
+  // ... [Keep all the previous functions unchanged]
   const getStyles = (hour, isSelected) => {
     const isHovered = hoveredHour === hour;
     if (isSelected) {
@@ -81,12 +83,10 @@ const DualSelectionClock = ({ onChange }) => {
     touchStartPosition.current = null;
   };
 
-  // Detect touch device
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
-  // Prevent scrolling on touch devices when interacting with the clock
   useEffect(() => {
     const preventDefault = (e) => {
       if (drawingRef.current) {
@@ -100,7 +100,6 @@ const DualSelectionClock = ({ onChange }) => {
     };
   }, []);
 
-  // Clean up timer when component unmounts
   useEffect(() => {
     return () => {
       if (pressTimer) {
@@ -152,7 +151,6 @@ const DualSelectionClock = ({ onChange }) => {
     if (!isTouchDevice) return;
     event.preventDefault();
     
-    // Only allow add/remove based on current mode
     if (isAddMode && selectedHours.includes(hour)) return;
     if (!isAddMode && !selectedHours.includes(hour)) return;
 
@@ -179,7 +177,6 @@ const DualSelectionClock = ({ onChange }) => {
   const handleSegmentInteraction = (segment, isRightClick = false) => {
     let newSelection;
     
-    // For desktop, use right click as remove mode
     const shouldRemove = (isTouchDevice && !isAddMode) || (!isTouchDevice && isRightClick);
     
     if (shouldRemove) {
@@ -212,7 +209,6 @@ const DualSelectionClock = ({ onChange }) => {
 
   const handleMouseDown = (segment, event) => {
     event.preventDefault();
-    // Store whether this is a right-click drag
     drawingRef.current = event.button === 2 ? 'right' : 'left';
     setIsDrawing(true);
     handleSegmentInteraction(segment, event.button === 2);
@@ -249,182 +245,182 @@ const DualSelectionClock = ({ onChange }) => {
       window.removeEventListener('mouseup', cleanUp);
       window.removeEventListener('touchend', cleanUp);
     };
-  }, []);  
-
+  }, []);
 
   return (
     <div className="w-full p-4">
-      {/* Instructions and controls container with max width */}
-      <div className="max-w-sm mx-auto mb-4">
-        {isTouchDevice ? (
-          <div className="mb-4">
-            <button
-              onClick={() => setShowInstructions(!showInstructions)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded"
-            >
-              <span className="text-sm font-medium">Instructions</span>
-              {showInstructions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {showInstructions && (
-              <div className="mt-2 text-xs md:text-sm bg-gray-50 p-3 rounded">
+      {/* Main container with responsive layout */}
+      <div className="@container">
+        <div className="flex flex-col @[640px]:flex-row @[640px]:items-start @[640px]:justify-center @[640px]:gap-8 @[640px]:max-w-6xl @[640px]:mx-auto">
+          {/* Instructions and controls container */}
+          <div className="@[640px]:w-64 mb-4 @[640px]:mb-0">
+            {isTouchDevice ? (
+              <div className="mb-4">
+                <button
+                  onClick={() => setShowInstructions(!showInstructions)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded"
+                >
+                  <span className="text-sm font-medium">Instructions</span>
+                  {showInstructions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+                
+                {showInstructions && (
+                  <div className="mt-2 text-xs md:text-sm bg-gray-50 p-3 rounded">
+                    <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
+                      <li>Use the Add/Remove button to switch modes</li>
+                      <li>Touch and drag to add or remove areas</li>
+                      <li>Long press circles to add or remove tears</li>
+                    </ul>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <button
+                    onClick={() => setIsAddMode(!isAddMode)}
+                    className={`px-3 py-1.5 rounded text-xs md:text-sm font-medium transition-colors ${
+                      isAddMode 
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                    }`}
+                  >
+                    Mode: {isAddMode ? 'Add' : 'Remove'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4 text-xs md:text-sm">
+                <p className="font-medium mb-2">Instructions:</p>
                 <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
-                  <li>Use the Add/Remove button to switch modes</li>
-                  <li>Touch and drag to add or remove areas</li>
-                  <li>Long press circles to add or remove tears</li>
+                  <li>Click and drag to paint areas</li>
+                  <li>Right-click and drag to erase</li>
+                  <li>Click circles to mark tears</li>
                 </ul>
               </div>
             )}
 
-            <div className="mt-4">
-              <button
-                onClick={() => setIsAddMode(!isAddMode)}
-                className={`px-3 py-1.5 rounded text-xs md:text-sm font-medium transition-colors ${
-                  isAddMode 
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                    : 'bg-red-100 text-red-700 hover:bg-red-200'
-                }`}
+            <div className="flex justify-center @[640px]:justify-start">
+              <button 
+                onClick={() => {
+                  setSelectedHours([]);
+                  setDetachmentSegments([]);
+                  onChange?.({ tears: [], detachment: [] });
+                }}
+                className="px-3 py-1.5 text-xs md:text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
               >
-                Mode: {isAddMode ? 'Add' : 'Remove'}
+                Clear All
               </button>
             </div>
+
+            <div className="mt-2 text-xs md:text-sm text-center @[640px]:text-left text-gray-500">
+              {isDrawing && (isAddMode ? "Adding..." : "Removing...")}
+            </div>
           </div>
-        ) : (
-          <div className="mb-4 text-xs md:text-sm">
-            <p className="font-medium mb-2">Instructions:</p>
-            <ul className="list-disc pl-4 space-y-0.5 text-gray-600">
-              <li>Click and drag to paint areas</li>
-              <li>Right-click and drag to erase</li>
-              <li>Click circles to mark tears</li>
-            </ul>
-          </div>
-        )}
-      </div>
 
-      {/* Responsive clock container */}
-      <div className="flex justify-center">
-        <div 
-          className="relative touch-none select-none"
-          style={{
-            width: 'min(80vw, min(80vh, 500px))',
-            aspectRatio: '1',
-            minWidth: '200px',
-            maxWidth: '500px'
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <svg 
-            viewBox="-110 -110 220 220" 
-            className="w-full h-full"
-            preserveAspectRatio="xMidYMid meet"
-            onMouseLeave={handleEndDrawing}
-            onTouchEnd={handleEndDrawing}
-          >
-            {/* SVG content remains the same */}
-            <circle cx="0" cy="0" r="100" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
-            <circle cx="0" cy="0" r="85" fill="none" stroke="#e5e5e5" strokeWidth="0.5"/>
-            <circle cx="0" cy="0" r="70" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
+          {/* Clock container */}
+          <div className="flex justify-center">
+            <div 
+              className="relative touch-none select-none"
+              style={{
+                width: 'min(80vw, min(80vh, 500px))',
+                aspectRatio: '1',
+                minWidth: '200px',
+                maxWidth: '500px'
+              }}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <svg 
+                viewBox="-110 -110 220 220" 
+                className="w-full h-full"
+                preserveAspectRatio="xMidYMid meet"
+                onMouseLeave={handleEndDrawing}
+                onTouchEnd={handleEndDrawing}
+              >
+                <circle cx="0" cy="0" r="100" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
+                <circle cx="0" cy="0" r="85" fill="none" stroke="#e5e5e5" strokeWidth="0.5"/>
+                <circle cx="0" cy="0" r="70" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
 
-            <g>
-              {[...Array(60)].map((_, i) => {
-                const isDetachmentSelected = detachmentSegments.includes(i);
-                const nextSegment = (i + 1) % 60;
-                
-                return (
-                  <path
-                    key={`segment-${i}`}
-                    d={`M ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y} 
-                        L ${getSegmentPosition(i, 100).x} ${getSegmentPosition(i, 100).y} 
-                        A 100 100 0 0 1 ${getSegmentPosition(nextSegment, 100).x} ${getSegmentPosition(nextSegment, 100).y}
-                        L ${getSegmentPosition(nextSegment, 70).x} ${getSegmentPosition(nextSegment, 70).y}
-                        A 70 70 0 0 0 ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y}`}
-                    fill={isDetachmentSelected ? "rgba(59, 130, 246, 0.5)" : "transparent"}
-                    className="cursor-pointer hover:fill-blue-200 transition-colors"
-                    onMouseDown={(e) => handleMouseDown(i, e)}
-                    onTouchStart={(e) => handleStartDrawing(i, e)}
-                    onMouseEnter={() => handleDrawing(i)}
-                    onTouchMove={(e) => {
-                      const touch = e.touches[0];
-                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                      const segmentId = element?.getAttribute('data-segment-id');
-                      if (segmentId !== null) {
-                        handleDrawing(parseInt(segmentId));
-                      }
-                    }}
-                    data-segment-id={i}
-                  />
-                );
-              })}
-            </g>
-
-            <g>
-              {[...Array(12)].map((_, i) => {
-                const hour = i + 1;
-                const visualPos = getPosition(hour, 75);
-                const interactionPos = isTouchDevice ? getPosition(hour, 100) : visualPos;
-                const isSelected = selectedHours.includes(hour);
-                
-                return (
-                  <g 
-                    key={`tear-${hour}`}
-                    onClick={(e) => handleTearClick(hour, e)}
-                    onTouchStart={(e) => handleTearTouchStart(hour, e)}
-                    onTouchMove={handleTearTouchMove}
-                    onTouchEnd={handleTearTouchEnd}
-                    onMouseEnter={() => setHoveredHour(hour)}
-                    onMouseLeave={() => setHoveredHour(null)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {isTouchDevice && (
-                      <circle
-                        cx={interactionPos.x}
-                        cy={interactionPos.y}
-                        r="12"
-                        fill="transparent"
-                        className="touch-target"
-                      />
-                    )}
+                <g>
+                  {[...Array(60)].map((_, i) => {
+                    const isDetachmentSelected = detachmentSegments.includes(i);
+                    const nextSegment = (i + 1) % 60;
                     
-                    {isSelected ? (
+                    return (
                       <path
-                        {...createTearPath(visualPos.x, visualPos.y, visualPos.angle)}
-                        style={getStyles(hour, true)}
+                        key={`segment-${i}`}
+                        d={`M ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y} 
+                            L ${getSegmentPosition(i, 100).x} ${getSegmentPosition(i, 100).y} 
+                            A 100 100 0 0 1 ${getSegmentPosition(nextSegment, 100).x} ${getSegmentPosition(nextSegment, 100).y}
+                            L ${getSegmentPosition(nextSegment, 70).x} ${getSegmentPosition(nextSegment, 70).y}
+                            A 70 70 0 0 0 ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y}`}
+                        fill={isDetachmentSelected ? "rgba(59, 130, 246, 0.5)" : "transparent"}
+                        className="cursor-pointer hover:fill-blue-200 transition-colors"
+                        onMouseDown={(e) => handleMouseDown(i, e)}
+                        onTouchStart={(e) => handleStartDrawing(i, e)}
+                        onMouseEnter={() => handleDrawing(i)}
+                        onTouchMove={(e) => {
+                          const touch = e.touches[0];
+                          const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                          const segmentId = element?.getAttribute('data-segment-id');
+                          if (segmentId !== null) {
+                            handleDrawing(parseInt(segmentId));
+                          }
+                        }}
+                        data-segment-id={i}
                       />
-                    ) : (
-                      <circle
-                        cx={visualPos.x}
-                        cy={visualPos.y}
-                        r="12"
-                        style={getStyles(hour, false)}
-                      />
-                    )}
-                  </g>
-                );
-              })}
-            </g>
+                    );
+                  })}
+                </g>
 
-            <line x1="0" y1="-100" x2="0" y2="-110" stroke="#666" strokeWidth="2"/>
-          </svg>
-        </div>
-      </div>
+                <g>
+                  {[...Array(12)].map((_, i) => {
+                    const hour = i + 1;
+                    const visualPos = getPosition(hour, 75);
+                    const interactionPos = isTouchDevice ? getPosition(hour, 100) : visualPos;
+                    const isSelected = selectedHours.includes(hour);
+                    
+                    return (
+                      <g 
+                        key={`tear-${hour}`}
+                        onClick={(e) => handleTearClick(hour, e)}
+                        onTouchStart={(e) => handleTearTouchStart(hour, e)}
+                        onTouchMove={handleTearTouchMove}
+                        onTouchEnd={handleTearTouchEnd}
+                        onMouseEnter={() => setHoveredHour(hour)}
+                        onMouseLeave={() => setHoveredHour(null)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {isTouchDevice && (
+                          <circle
+                            cx={interactionPos.x}
+                            cy={interactionPos.y}
+                            r="12"
+                            fill="transparent"
+                            className="touch-target"
+                          />
+                        )}
+                        
+                        {isSelected ? (
+                          <path
+                            {...createTearPath(visualPos.x, visualPos.y, visualPos.angle)}
+                            style={getStyles(hour, true)}
+                          />
+                        ) : (
+                          <circle
+                            cx={visualPos.x}
+                            cy={visualPos.y}
+                            r="12"
+                            style={getStyles(hour, false)}
+                          />
+                        )}
+                      </g>
+                    );
+                  })}
+                </g>
 
-      {/* Controls container */}
-      <div className="max-w-sm mx-auto mt-4">
-        <div className="flex justify-center">
-          <button 
-            onClick={() => {
-              setSelectedHours([]);
-              setDetachmentSegments([]);
-              onChange?.({ tears: [], detachment: [] });
-            }}
-            className="px-3 py-1.5 text-xs md:text-sm bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-          >
-            Clear All
-          </button>
-        </div>
-
-        <div className="mt-2 text-xs md:text-sm text-center text-gray-500">
-          {isDrawing && (isAddMode ? "Adding..." : "Removing...")}
+                <line x1="0" y1="-100" x2="0" y2="-110" stroke="#666" strokeWidth="2"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
     </div>
