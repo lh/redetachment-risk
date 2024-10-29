@@ -2,19 +2,113 @@ import React from 'react';
 import { getPosition, getSegmentPosition, createTearPath } from './utils/clockCalculations';
 import { getStyles } from './styles/clockStyles';
 
+const useLongPress = (onLongPress, onClick, { shouldPreventDefault = true, delay = 500 } = {}) => {
+  const [longPressTriggered, setLongPressTriggered] = React.useState(false);
+  const timeout = React.useRef();
+  const target = React.useRef();
+
+  const preventDefault = React.useCallback((event) => {
+    if (!longPressTriggered) {
+      event.preventDefault();
+    }
+  }, [longPressTriggered]);
+
+  const start = React.useCallback(
+    (event) => {
+      // For touch events, we need to get the element differently
+      const element = event.type.includes('touch') 
+        ? document.elementFromPoint(
+            event.touches[0].clientX,
+            event.touches[0].clientY
+          )
+        : event.currentTarget;
+
+      if (shouldPreventDefault && element) {
+        element.addEventListener('touchend', preventDefault, {
+          passive: false
+        });
+        target.current = element;
+      }
+
+      timeout.current = setTimeout(() => {
+        onLongPress(element);
+        setLongPressTriggered(true);
+      }, delay);
+    },
+    [onLongPress, delay, shouldPreventDefault, preventDefault]
+  );
+
+  const clear = React.useCallback(
+    (event, shouldTriggerClick = true) => {
+      timeout.current && clearTimeout(timeout.current);
+      shouldTriggerClick && !longPressTriggered && onClick?.(event);
+      setLongPressTriggered(false);
+      if (shouldPreventDefault && target.current) {
+        target.current.removeEventListener('touchend', preventDefault);
+      }
+    },
+    [shouldPreventDefault, onClick, longPressTriggered, preventDefault]
+  );
+
+  return {
+    onMouseDown: start,
+    onTouchStart: start,
+    onMouseUp: clear,
+    onMouseLeave: (e) => clear(e, false),
+    onTouchEnd: clear
+  };
+};
+
 const ClockFace = ({
   selectedHours,
   detachmentSegments,
   hoveredHour,
   isTouchDevice,
-  handlers
+  onSegmentToggle,
+  onTearToggle,
+  onHoverChange
 }) => {
   // Define radius parameters
   const outerRadius = 110;
   const innerRadius = 65;
   const middleRadius = Math.floor((outerRadius + innerRadius) / 2);
   const tearRadius = middleRadius + 12;
-  const indicatorExtension = 10; // How far the 12 o'clock indicator extends
+  const indicatorExtension = 10;
+
+  const [isDrawing, setIsDrawing] = React.useState(false);
+  const [lastDrawnSegment, setLastDrawnSegment] = React.useState(null);
+
+  // Handle segment drawing/erasing
+  const handleSegmentInteraction = (segmentId) => {
+    if (lastDrawnSegment !== segmentId) {
+      onSegmentToggle(segmentId);
+      setLastDrawnSegment(segmentId);
+    }
+  };
+
+  const handleDrawingStart = (segmentId) => {
+    setIsDrawing(true);
+    handleSegmentInteraction(segmentId);
+  };
+
+  const handleDrawingEnd = () => {
+    setIsDrawing(false);
+    setLastDrawnSegment(null);
+  };
+
+  // Long press handlers for tear markers
+  const longPressHandlers = useLongPress(
+    (element) => {
+      // Safely get the hour from the element or its parent
+      const hourElement = element?.closest('[data-hour]');
+      const hour = hourElement ? parseInt(hourElement.dataset.hour) : null;
+      if (hour) {
+        onTearToggle(hour);
+      }
+    },
+    null,
+    { delay: 500 }
+  );
 
   return (
     <div className="flex justify-center">
@@ -32,8 +126,9 @@ const ClockFace = ({
           viewBox="-110 -110 220 220" 
           className="w-full h-full"
           preserveAspectRatio="xMidYMid meet"
-          onMouseLeave={handlers.handleEndDrawing}
-          onTouchEnd={handlers.handleEndDrawing}
+          onMouseUp={handleDrawingEnd}
+          onTouchEnd={handleDrawingEnd}
+          onMouseLeave={handleDrawingEnd}
         >
           {/* Grid circles */}
           <circle cx="0" cy="0" r={outerRadius} fill="none" stroke="#e5e5e5" strokeWidth="1"/>
@@ -56,15 +151,17 @@ const ClockFace = ({
                       A ${innerRadius} ${innerRadius} 0 0 0 ${getSegmentPosition(i, innerRadius).x} ${getSegmentPosition(i, innerRadius).y}`}
                   fill={isDetachmentSelected ? "rgba(59, 130, 246, 0.5)" : "transparent"}
                   className="cursor-pointer hover:fill-blue-200 transition-colors"
-                  onMouseDown={(e) => handlers.handleMouseDown(i, e)}
-                  onTouchStart={(e) => handlers.handleStartDrawing(i, e)}
-                  onMouseEnter={() => handlers.handleDrawing(i)}
+                  onMouseDown={() => handleDrawingStart(i)}
+                  onTouchStart={() => handleDrawingStart(i)}
+                  onMouseEnter={() => isDrawing && handleSegmentInteraction(i)}
                   onTouchMove={(e) => {
-                    const touch = e.touches[0];
-                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-                    const segmentId = element?.getAttribute('data-segment-id');
-                    if (segmentId !== null) {
-                      handlers.handleDrawing(parseInt(segmentId));
+                    if (isDrawing) {
+                      const touch = e.touches[0];
+                      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                      const segmentId = element?.getAttribute('data-segment-id');
+                      if (segmentId !== null) {
+                        handleSegmentInteraction(parseInt(segmentId));
+                      }
                     }
                   }}
                   data-segment-id={i}
@@ -84,13 +181,11 @@ const ClockFace = ({
               return (
                 <g 
                   key={`tear-${hour}`}
-                  onClick={(e) => handlers.handleTearClick(hour, e)}
-                  onTouchStart={(e) => handlers.handleTearTouchStart(hour, e)}
-                  onTouchMove={handlers.handleTearTouchMove}
-                  onTouchEnd={handlers.handleTearTouchEnd}
-                  onMouseEnter={() => handlers.setHoveredHour(hour)}
-                  onMouseLeave={() => handlers.setHoveredHour(null)}
+                  {...(isTouchDevice ? longPressHandlers : { onClick: () => onTearToggle(hour) })}
+                  onMouseEnter={() => onHoverChange(hour)}
+                  onMouseLeave={() => onHoverChange(null)}
                   style={{ cursor: 'pointer' }}
+                  data-hour={hour}
                 >
                   {isTouchDevice && (
                     <circle

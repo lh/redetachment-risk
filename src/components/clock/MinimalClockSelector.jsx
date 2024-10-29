@@ -1,47 +1,53 @@
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Controls from './Controls';
 import ClockFace from './ClockFace';
-import { useClockInteractions } from './hooks/useClockInteractions';
 
 const MinimalClockSelector = ({ onChange }) => {
-  const {
-    selectedHours,
-    detachmentSegments,
-    hoveredHour,
-    setHoveredHour,
-    isAddMode,
-    setIsAddMode,
-    isDrawing,
-    isTouchDevice,
-    handleTearTouchMove,
-    handleTearTouchEnd,
-    handleSegmentInteraction,
-    handleStartDrawing,
-    handleDrawing,
-    handleMouseDown,
-    handleTearClick,
-    handleTearTouchStart,
-    handleEndDrawing,
-    handleClearAll
-  } = useClockInteractions(onChange);
+  const [selectedHours, setSelectedHours] = useState([]);
+  const [detachmentSegments, setDetachmentSegments] = useState([]);
+  const [hoveredHour, setHoveredHour] = useState(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
-  const handlers = {
-    setHoveredHour,
-    handleTearTouchMove,
-    handleTearTouchEnd,
-    handleSegmentInteraction,
-    handleStartDrawing,
-    handleDrawing,
-    handleMouseDown,
-    handleTearClick,
-    handleTearTouchStart,
-    handleEndDrawing
-  };
+  // Detect touch device
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  // Handle tear marker toggles
+  const handleTearToggle = useCallback((hour) => {
+    setSelectedHours(prev => 
+      prev.includes(hour) 
+        ? prev.filter(h => h !== hour)
+        : [...prev, hour]
+    );
+  }, []);
+
+  // Handle detachment segment toggles
+  const handleSegmentToggle = useCallback((segmentId) => {
+    setDetachmentSegments(prev => 
+      prev.includes(segmentId)
+        ? prev.filter(id => id !== segmentId)
+        : [...prev, segmentId]
+    );
+  }, []);
+
+  // Clear all selections
+  const handleClearAll = useCallback(() => {
+    setSelectedHours([]);
+    setDetachmentSegments([]);
+  }, []);
+
+  // Notify parent of changes
+  useEffect(() => {
+    onChange?.({
+      tears: selectedHours,
+      detachment: detachmentSegments
+    });
+  }, [selectedHours, detachmentSegments, onChange]);
 
   return (
     <div className="w-full min-h-screen p-4 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        {/* Main content wrapper */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
           {/* Clock section */}
           <div className="w-full max-w-2xl md:flex-1">
@@ -50,7 +56,9 @@ const MinimalClockSelector = ({ onChange }) => {
               detachmentSegments={detachmentSegments}
               hoveredHour={hoveredHour}
               isTouchDevice={isTouchDevice}
-              handlers={handlers}
+              onSegmentToggle={handleSegmentToggle}
+              onTearToggle={handleTearToggle}
+              onHoverChange={setHoveredHour}
             />
           </div>
 
@@ -59,9 +67,6 @@ const MinimalClockSelector = ({ onChange }) => {
             <div className="relative">
               <Controls
                 isTouchDevice={isTouchDevice}
-                isAddMode={isAddMode}
-                setIsAddMode={setIsAddMode}
-                isDrawing={false}
                 handleClearAll={handleClearAll}
                 expandDirection="up"
               />
