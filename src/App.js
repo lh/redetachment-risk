@@ -1,4 +1,4 @@
-import MinimalClockSelector from './components/MinimalClockSelector';
+import MinimalClockSelector from './components/clock/MinimalClockSelector';
 
 function App() {
   return (
