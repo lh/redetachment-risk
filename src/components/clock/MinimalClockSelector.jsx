@@ -3,44 +3,6 @@ import Controls from './Controls';
 import ClockFace from './ClockFace';
 import { useClockInteractions } from './hooks/useClockInteractions';
 
-const containerStyles = {
-  width: '100%',
-  padding: '1rem'
-};
-
-const layoutStyles = {
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'flex-start',
-  gap: '2rem',
-  maxWidth: '1200px',
-  margin: '0 auto'
-};
-
-const controlStyles = {
-  width: '300px',
-  flexShrink: 0
-};
-
-const clockContainerStyles = {
-  flex: '1 1 auto',
-  display: 'flex',
-  justifyContent: 'center'
-};
-
-// Media query styles will be added via CSS
-const responsiveStyles = `
-  @media (max-width: 768px) {
-    .layout-container {
-      flex-direction: column;
-    }
-    .controls-container {
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-  }
-`;
-
 const MinimalClockSelector = ({ onChange }) => {
   const {
     selectedHours,
@@ -76,35 +38,35 @@ const MinimalClockSelector = ({ onChange }) => {
     handleEndDrawing
   };
 
-  // Add the responsive styles to the document
-  React.useEffect(() => {
-    const styleSheet = document.createElement('style');
-    styleSheet.innerText = responsiveStyles;
-    document.head.appendChild(styleSheet);
-    return () => document.head.removeChild(styleSheet);
-  }, []);
-
   return (
-    <div style={containerStyles}>
-      <div style={layoutStyles} className="layout-container">
-        <div style={controlStyles} className="controls-container">
-          <Controls
-            isTouchDevice={isTouchDevice}
-            isAddMode={isAddMode}
-            setIsAddMode={setIsAddMode}
-            isDrawing={isDrawing}
-            handleClearAll={handleClearAll}
-          />
-        </div>
-        
-        <div style={clockContainerStyles}>
-          <ClockFace
-            selectedHours={selectedHours}
-            detachmentSegments={detachmentSegments}
-            hoveredHour={hoveredHour}
-            isTouchDevice={isTouchDevice}
-            handlers={handlers}
-          />
+    <div className="w-full min-h-screen p-4 bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Main content wrapper */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
+          {/* Clock section */}
+          <div className="w-full max-w-2xl md:flex-1">
+            <ClockFace
+              selectedHours={selectedHours}
+              detachmentSegments={detachmentSegments}
+              hoveredHour={hoveredHour}
+              isTouchDevice={isTouchDevice}
+              handlers={handlers}
+            />
+          </div>
+
+          {/* Controls section */}
+          <div className="fixed md:static bottom-4 left-1/2 landscape:left-auto landscape:right-4 transform -translate-x-1/2 md:translate-x-0 landscape:translate-x-0 md:ml-8">
+            <div className="relative">
+              <Controls
+                isTouchDevice={isTouchDevice}
+                isAddMode={isAddMode}
+                setIsAddMode={setIsAddMode}
+                isDrawing={false}
+                handleClearAll={handleClearAll}
+                expandDirection="up"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

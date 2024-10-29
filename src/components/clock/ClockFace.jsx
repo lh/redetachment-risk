@@ -9,6 +9,13 @@ const ClockFace = ({
   isTouchDevice,
   handlers
 }) => {
+  // Define radius parameters
+  const outerRadius = 110;
+  const innerRadius = 65;
+  const middleRadius = Math.floor((outerRadius + innerRadius) / 2);
+  const tearRadius = middleRadius + 12;
+  const indicatorExtension = 10; // How far the 12 o'clock indicator extends
+
   return (
     <div className="flex justify-center">
       <div 
@@ -28,10 +35,12 @@ const ClockFace = ({
           onMouseLeave={handlers.handleEndDrawing}
           onTouchEnd={handlers.handleEndDrawing}
         >
-          <circle cx="0" cy="0" r="100" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
-          <circle cx="0" cy="0" r="85" fill="none" stroke="#e5e5e5" strokeWidth="0.5"/>
-          <circle cx="0" cy="0" r="70" fill="none" stroke="#e5e5e5" strokeWidth="1"/>
+          {/* Grid circles */}
+          <circle cx="0" cy="0" r={outerRadius} fill="none" stroke="#e5e5e5" strokeWidth="1"/>
+          <circle cx="0" cy="0" r={middleRadius} fill="none" stroke="#e5e5e5" strokeWidth="0.5"/>
+          <circle cx="0" cy="0" r={innerRadius} fill="none" stroke="#e5e5e5" strokeWidth="1"/>
 
+          {/* Detachment segments */}
           <g>
             {[...Array(60)].map((_, i) => {
               const isDetachmentSelected = detachmentSegments.includes(i);
@@ -40,11 +49,11 @@ const ClockFace = ({
               return (
                 <path
                   key={`segment-${i}`}
-                  d={`M ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y} 
-                      L ${getSegmentPosition(i, 100).x} ${getSegmentPosition(i, 100).y} 
-                      A 100 100 0 0 1 ${getSegmentPosition(nextSegment, 100).x} ${getSegmentPosition(nextSegment, 100).y}
-                      L ${getSegmentPosition(nextSegment, 70).x} ${getSegmentPosition(nextSegment, 70).y}
-                      A 70 70 0 0 0 ${getSegmentPosition(i, 70).x} ${getSegmentPosition(i, 70).y}`}
+                  d={`M ${getSegmentPosition(i, innerRadius).x} ${getSegmentPosition(i, innerRadius).y} 
+                      L ${getSegmentPosition(i, outerRadius).x} ${getSegmentPosition(i, outerRadius).y} 
+                      A ${outerRadius} ${outerRadius} 0 0 1 ${getSegmentPosition(nextSegment, outerRadius).x} ${getSegmentPosition(nextSegment, outerRadius).y}
+                      L ${getSegmentPosition(nextSegment, innerRadius).x} ${getSegmentPosition(nextSegment, innerRadius).y}
+                      A ${innerRadius} ${innerRadius} 0 0 0 ${getSegmentPosition(i, innerRadius).x} ${getSegmentPosition(i, innerRadius).y}`}
                   fill={isDetachmentSelected ? "rgba(59, 130, 246, 0.5)" : "transparent"}
                   className="cursor-pointer hover:fill-blue-200 transition-colors"
                   onMouseDown={(e) => handlers.handleMouseDown(i, e)}
@@ -64,11 +73,12 @@ const ClockFace = ({
             })}
           </g>
 
+          {/* Tear markers */}
           <g>
             {[...Array(12)].map((_, i) => {
               const hour = i + 1;
-              const visualPos = getPosition(hour, 75);
-              const interactionPos = isTouchDevice ? getPosition(hour, 100) : visualPos;
+              const visualPos = getPosition(hour, tearRadius);
+              const interactionPos = isTouchDevice ? getPosition(hour, outerRadius) : visualPos;
               const isSelected = selectedHours.includes(hour);
               
               return (
@@ -110,7 +120,15 @@ const ClockFace = ({
             })}
           </g>
 
-          <line x1="0" y1="-100" x2="0" y2="-110" stroke="#666" strokeWidth="2"/>
+          {/* 12 o'clock indicator */}
+          <line 
+            x1="0" 
+            y1={-outerRadius} 
+            x2="0" 
+            y2={-(outerRadius + indicatorExtension)} 
+            stroke="#666" 
+            strokeWidth="2"
+          />
         </svg>
       </div>
     </div>
