@@ -39,16 +39,18 @@ const MinimalClockSelector = ({ onChange }) => {
 
   // Notify parent of changes
   useEffect(() => {
-    onChange?.({
-      tears: selectedHours,
-      detachment: detachmentSegments
-    });
+    if (onChange) {
+      onChange({
+        tears: selectedHours,
+        detachment: detachmentSegments
+      });
+    }
   }, [selectedHours, detachmentSegments, onChange]);
 
   return (
-    <div className="w-full min-h-screen p-4 bg-gray-50">
+    <div className="w-full p-4 bg-gray-50">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
+        <div className="flex flex-col md:flex-row items-start gap-4">
           {/* Clock section */}
           <div className="w-full max-w-2xl md:flex-1">
             <ClockFace
